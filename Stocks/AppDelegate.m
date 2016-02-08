@@ -10,6 +10,10 @@
 #import "DetailViewController.h"
 #import "MasterViewController.h"
 
+#import <RestKit/RestKit.h>
+#import <RestKit/CoreData.h>
+
+
 @interface AppDelegate () <UISplitViewControllerDelegate>
 
 @end
@@ -19,14 +23,53 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // Override point for customization after application launch.
-    UISplitViewController *splitViewController = (UISplitViewController *)self.window.rootViewController;
-    UINavigationController *navigationController = [splitViewController.viewControllers lastObject];
-    navigationController.topViewController.navigationItem.leftBarButtonItem = splitViewController.displayModeButtonItem;
-    splitViewController.delegate = self;
-
-    UINavigationController *masterNavigationController = splitViewController.viewControllers[0];
-    MasterViewController *controller = (MasterViewController *)masterNavigationController.topViewController;
-    controller.managedObjectContext = self.managedObjectContext;
+    
+    
+    
+    
+    
+    
+    NSURL *baseURL = [NSURL URLWithString:@"https://evening-everglades-1560.herokuapp.com/api/v1/stocks"];
+    RKObjectManager *objectManager = [RKObjectManager managerWithBaseURL:baseURL];
+    
+    //initialize object store
+    
+    
+    
+    NSManagedObjectModel *managedObjectModel = [NSManagedObjectModel mergedModelFromBundles:nil];
+    RKManagedObjectStore *managedObjectStore = [[RKManagedObjectStore alloc] initWithManagedObjectModel:managedObjectModel];
+    objectManager.managedObjectStore = managedObjectStore;
+    
+    [managedObjectStore createPersistentStoreCoordinator];
+    NSString *storePath = [RKApplicationDataDirectory() stringByAppendingPathComponent:@"StocksDB.sqlite"];
+    NSString *seedPath = [[NSBundle mainBundle] pathForResource:@"RKSeedDatabase" ofType:@"sqlite"];
+    NSError *error;
+    NSPersistentStore *persistentStore = [managedObjectStore addSQLitePersistentStoreAtPath:storePath fromSeedDatabaseAtPath:seedPath withConfiguration:nil options:nil error:&error];
+    
+    [managedObjectStore createManagedObjectContexts];
+    
+    managedObjectStore.managedObjectCache = [[RKInMemoryManagedObjectCache alloc] initWithManagedObjectContext:managedObjectStore.persistentStoreManagedObjectContext];
+    
+    RKEntityMapping *stockMapping = [RKEntityMapping mappingForEntityForName:@"Stock" inManagedObjectStore:managedObjectStore];
+    stockMapping.identificationAttributes = @[ @"symbol" ];
+    
+    [stockMapping addAttributeMappingsFromArray:@[ @"stockId", @"submitter", @"projected_er_date", @"full_title", @"symbol", @"submitted_on" ]];
+    
+    RKResponseDescriptor *stockResponseDescriptor = [RKResponseDescriptor responseDescriptorWithMapping:stockMapping method:RKRequestMethodGET pathPattern:nil keyPath:nil statusCodes:RKStatusCodeIndexSetForClass(RKStatusCodeClassSuccessful)];
+    
+    [objectManager addResponseDescriptor:stockResponseDescriptor];
+    
+    [AFNetworkActivityIndicatorManager sharedManager].enabled = YES;
+    
+    
+//    UISplitViewController *splitViewController = (UISplitViewController *)self.window.rootViewController;
+//    UINavigationController *navigationController = [splitViewController.viewControllers lastObject];
+//    navigationController.topViewController.navigationItem.leftBarButtonItem = splitViewController.displayModeButtonItem;
+//    splitViewController.delegate = self;
+//
+//    UINavigationController *masterNavigationController = splitViewController.viewControllers[0];
+//    MasterViewController *controller = (MasterViewController *)masterNavigationController.topViewController;
+//    controller.managedObjectContext = self.managedObjectContext;
     return YES;
 }
 

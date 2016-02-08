@@ -4,6 +4,11 @@
 <dict>
 	<key>SchemeUserState</key>
 	<dict>
+		<key>Generate Seed.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>6</integer>
+		</dict>
 		<key>Stocks.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
@@ -23,6 +28,21 @@
 			<true/>
 		</dict>
 		<key>2703F6181C4B327000212346</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>273EB5EA1C58063900659C44</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>273EB6081C58063900659C44</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>273EB6131C58063900659C44</key>
 		<dict>
 			<key>primary</key>
 			<true/>

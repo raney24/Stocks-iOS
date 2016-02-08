@@ -8,8 +8,13 @@
 
 #import "MasterViewController.h"
 #import "DetailViewController.h"
+#import <RestKit/CoreData.h>
+#import <RestKit/RestKit.h>
+#import "Stock.h"
 
 @interface MasterViewController ()
+
+@property (nonatomic, strong) NSArray *stocks;
 
 @end
 
@@ -17,12 +22,72 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    
+    [self configureRestKit];
+//    [self loadStocks];
     // Do any additional setup after loading the view, typically from a nib.
     self.navigationItem.leftBarButtonItem = self.editButtonItem;
 
     UIBarButtonItem *addButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(insertNewObject:)];
     self.navigationItem.rightBarButtonItem = addButton;
     self.detailViewController = (DetailViewController *)[[self.splitViewController.viewControllers lastObject] topViewController];
+}
+
+- (void)configureRestKit
+{
+    // initialize AFNetworking HTTPClient
+    
+
+    
+    RKObjectMapping *stockMapping = [RKObjectMapping mappingForClass:[Stock class]];
+    [stockMapping addAttributeMappingsFromDictionary:@{
+                                                       @"id": @"stockId"
+//                                                       @"submitter": @"submitter",
+//                                                       @"projected_er_date": @"projected_er_date",
+//                                                       @"full_title": @"full_title",
+//                                                       @"symbol": @"symbol",
+//                                                       @"submitted_on": @"submitted_on"
+                                                       }];
+    NSIndexSet *statusCodes = RKStatusCodeIndexSetForClass(RKStatusCodeClassSuccessful);
+    
+    RKResponseDescriptor *responseDescriptor = [RKResponseDescriptor responseDescriptorWithMapping:stockMapping method:RKRequestMethodAny pathPattern:nil keyPath:@"" statusCodes:statusCodes];
+    
+    NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:@"https://evening-everglades-1560.herokuapp.com/api/v1/stocks"]];
+    
+    RKObjectRequestOperation *operation = [[RKObjectRequestOperation alloc] initWithRequest:request responseDescriptors:@[responseDescriptor]];
+    
+    [operation setCompletionBlockWithSuccess:^(RKObjectRequestOperation *operation, RKMappingResult *result) {
+            Stock *stock = [result firstObject];
+            NSLog(@"mapped w stock: %@", stock);
+        } failure:^(RKObjectRequestOperation *operation, NSError *error) {
+            NSLog(@"failed w error: %@", [error localizedDescription]);
+        }];
+    [operation start];
+    
+    
+    
+}
+
+- (void)loadStocks
+{
+//    NSString *clientID = kCLIENTID;
+//    NSString *clientSecret = kCLIENTSECRET;
+    
+//    NSDictionary *queryParams = @{@"ll" : latLon,
+//                                  @"client_id" : clientID,
+//                                  @"client_secret" : clientSecret,
+//                                  @"categoryId" : @"4bf58dd8d48988d1e0931735",
+//                                  @"v" : @"20140118"};
+    
+//    [[RKObjectManager sharedManager] getObjectsAtPath:@"/api/v1/stocks"
+//                                           parameters:nil
+//                                              success:^(RKObjectRequestOperation *operation, RKMappingResult *mappingResult) {
+//                                                  _stocks = mappingResult.array;
+//                                                  [self.tableView reloadData];
+//                                              }
+//                                              failure:^(RKObjectRequestOperation *operation, NSError *error) {
+//                                                  NSLog(@"What do you mean by 'there is no coffee?': %@", error);
+//                                              }];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -75,12 +140,15 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     id <NSFetchedResultsSectionInfo> sectionInfo = [self.fetchedResultsController sections][section];
-    return [sectionInfo numberOfObjects];
+    return _stocks.count;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"Cell" forIndexPath:indexPath];
-    [self configureCell:cell atIndexPath:indexPath];
+    
+    Stock *stock = _stocks[indexPath.row];
+//    cell.textLabel.text = stock.name;
+    
     return cell;
 }
 
